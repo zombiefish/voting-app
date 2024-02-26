@@ -1,0 +1,22 @@
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: result-ingress
+spec:
+  rules:
+  - host: ap-result.highvail.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: result
+            port:
+              number: 80
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - ap-result.highvail.com
+    secretName: highvail-tls
+
