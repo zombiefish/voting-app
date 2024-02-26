@@ -3,7 +3,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: result-ingress
+  name: vote-ingress
 spec:
   rules:
   - host: ap-vote.highvail.com
@@ -11,7 +11,7 @@ spec:
       paths:
       - backend:
           service:
-            name: result
+            name: vote
             port:
               number: 80
         pathType: ImplementationSpecific
