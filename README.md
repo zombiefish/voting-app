@@ -1,8 +1,13 @@
 # Example Voting App
 
-ver 0.1
 
 A simple distributed application running across multiple Docker containers.
+
+## Releases
+
+|Versionc| Description |
+| :--- | :--- |
+| ver 0.1 | Initial commit |
 
 ## Getting started
 
