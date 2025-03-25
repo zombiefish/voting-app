@@ -1,0 +1,16 @@
+apiVersion: fleet.cattle.io/v1alpha1
+kind: GitRepo
+metadata:
+  name: vote
+  namespace: fleet-default
+spec:
+  branch: master
+  correctDrift:
+    enabled: false
+  insecureSkipTLSVerify: false
+  paths:
+  - /kubernetes
+  repo: https://github.com/zombiefish/voting-app
+  targetNamespace: vote
+  targets:
+  - clusterName: k3s-1
