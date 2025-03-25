@@ -1,9 +1,9 @@
 ---
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vote-ingress
+  namespace: vote
 spec:
   rules:
   - host: ap-vote.highvail.com

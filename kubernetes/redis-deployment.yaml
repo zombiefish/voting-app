@@ -4,6 +4,7 @@ metadata:
   labels:
     app: redis
   name: redis
+  namespace: vote
 spec:
   replicas: 1
   selector:
@@ -25,4 +26,4 @@ spec:
           name: redis-data
       volumes:
       - name: redis-data
-        emptyDir: {} 
+        emptyDir: {}
