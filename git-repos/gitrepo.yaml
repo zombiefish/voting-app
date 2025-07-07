@@ -13,4 +13,4 @@ spec:
   repo: https://github.com/zombiefish/voting-app
   targetNamespace: vote
   targets:
-  - clusterName: k3s-1
+  - clusterName: dev
