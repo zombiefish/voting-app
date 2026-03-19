@@ -3,10 +3,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vote-ingress
-  namespace: vote
+  namespace: voting
 spec:
   rules:
-  - host: ap-vote.highvail.com
+  - host: ap-vote.apps.osvlab.highvail.com
     http:
       paths:
       - backend:
@@ -15,8 +15,8 @@ spec:
             port:
               number: 80
         pathType: ImplementationSpecific
-  tls:
-  - hosts:
-    - ap-vote.highvail.com
-    secretName: highvail-tls
+#   tls:
+#   - hosts:
+#     - ap-vote.highvail.com
+#     secretName: highvail-tls
 

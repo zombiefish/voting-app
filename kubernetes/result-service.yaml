@@ -4,12 +4,13 @@ metadata:
   labels:
     app: result
   name: result
-  namespace: vote
+  namespace: voting
 spec:
   # type: LoadBalancer
   ports:
   - name: "result-service"
+    protocol: TCP
     port: 80
-    targetPort: 80
+    targetPort: 8080
   selector:
     app: result

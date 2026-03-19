@@ -4,7 +4,7 @@ metadata:
   labels:
     app: db
   name: db
-  namespace: vote
+  namespace: voting
 spec:
   replicas: 1
   selector:
@@ -16,18 +16,21 @@ spec:
         app: db
     spec:
       containers:
-      - image: postgres:15-alpine
+      - image: zombiefish/postgres:15-alpine-0.1
         name: postgres
         env:
         - name: POSTGRES_USER
           value: postgres
         - name: POSTGRES_PASSWORD
           value: postgres
+        securityContext:
+          runAsUser: 1000750000
         ports:
         - containerPort: 5432
           name: postgres
         volumeMounts:
-        - mountPath: /var/lib/postgresql/data
+        # - mountPath: /var/lib/postgresql/data
+        - mountPath: /var/lib/postgresql
           name: db-data
       volumes:
       - name: db-data
