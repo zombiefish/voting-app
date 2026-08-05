@@ -1,0 +1,296 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vote
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: db
+  name: db
+  namespace: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      initContainers:
+      - name: init-pv
+        image: alpine:3.20
+        command: ["sh", "-c", "mkdir -p /var/lib/pgsql/data"]
+        volumeMounts:
+        - name: db-data
+          mountPath: /var/lib/pgsql/
+      containers:
+      - image: postgres:15.18-alpine
+        imagePullPolicy: Always
+        name: postgres
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        ports:
+        - containerPort: 5432
+          name: postgres
+        volumeMounts:
+        - mountPath: /var/lib/postgresql
+          name: db-data
+      volumes:
+      - name: db-data
+        persistentVolumeClaim:
+          claimName: postgres-db
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-db
+  namespace: vote
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: topolvm-provisioner
+  volumeMode: Filesystem
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: db
+  name: db
+  namespace: vote
+spec:
+  type: ClusterIP
+  ports:
+  - name: "db-service"
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis
+  name: redis
+  namespace: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis:alpine
+        imagePullPolicy: Always
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - mountPath: /data
+          name: redis-data
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+  name: redis
+  namespace: vote
+spec:
+  type: ClusterIP
+  ports:
+  - name: "redis-service"
+    port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: result
+  name: result
+  namespace: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: result
+  template:
+    metadata:
+      labels:
+        app: result
+    spec:
+      containers:
+      - name: result
+        image: zombiefish/vote:result-1
+        imagePullPolicy: Always
+        ports:
+          - name: result
+            containerPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: result-ingress
+  namespace: vote
+spec:
+  rules:
+  - host: kvm-result.highvail.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: result
+            port:
+              number: 80
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - kvm-result.highvail.com
+    secretName: highvail-tls
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: result
+  name: result
+  namespace: vote
+spec:
+  # type: LoadBalancer
+  ports:
+  - name: "result-service"
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    app: result
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: vote
+  name: vote
+  namespace: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+      - image: zombiefish/vote:vote-1
+        imagePullPolicy: Always
+        name: vote
+        ports:
+        - containerPort: 8080
+          name: vote
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vote-ingress
+  namespace: vote
+spec:
+  rules:
+  - host: kvm-vote.highvail.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: vote
+            port:
+              number: 80
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - kvm-vote.highvail.com
+    secretName: highvail-tls
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vote
+  name: vote
+  namespace: vote
+spec:
+  # type: LoadBalancer
+  ports:
+  - name: "vote-service"
+    port: 80
+    targetPort: 8080
+  selector:
+    app: vote
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: worker
+  name: worker
+  namespace: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - image: zombiefish/vote:worker-1
+        imagePullPolicy: Always
+        name: worker
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: highvail-tls
+  namespace: vote
+spec:
+  encryptedData:
+    tls.crt: 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
+    tls.key: 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
+  template:
+    metadata:
+      name: highvail-tls
+      namespace: vote
